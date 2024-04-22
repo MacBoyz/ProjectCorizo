@@ -1,0 +1,89 @@
+#Importing all required libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#Reading data from file and displaying it
+data = pd.read_csv(path_to_file)
+data.head()
+
+#Making date machine understandable
+data['Date'] = pd.to_datetime(data['Date'])
+data.head()
+data['Date'].dt.year.unique()
+data['Day']=data['Date'].dt.day
+data['Month']=data['Date'].dt.month
+data['Year']=data['Date'].dt.year
+
+data.head()
+
+#Dropping date column since it isn't needed
+data.drop('Date',axis=1,inplace=True)
+data.head()
+
+#Converting float to int to make it machine understandable
+data['Open']=data['Open'].astype(int)
+data['High']=data['Open'].astype(int)
+data['Low']=data['Open'].astype(int)
+data['Close']=data['Open'].astype(int)
+data['Adj Close']=data['Open'].astype(int)
+
+data.head()
+
+#Changing the order of dataset such that the output is at the last
+temp_col=data.columns.to_list()
+print(temp_col, '\n')
+
+new_col = temp_col[:3] + temp_col[4:]
+new_col.append(temp_col[3])
+print(new_col, '\n')
+
+data = data.reindex(columns=new_col)
+data.head()
+
+#Scalar transformation of the data
+from sklearn.preprocessing import StandardScaler
+
+scaler=StandardScaler()
+data=scaler.fit_transform(data)
+
+data[0]
+
+#Initializing the train and test set
+from sklearn.model_selection import train_test_split as tts
+
+x= data[:, : -1]
+y= data[:, -1]
+
+x_train, x_test, y_train, y_test = tts(x, y, test_size=0.3, random_state=69)
+
+print(x_train.shape)
+print(x_test.shape)
+print(y_train.shape)
+print(y_test.shape)
+
+#Linear Regression
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(x_train,y_train)
+print("LR Coefficients: \n", model.coef_)
+print("LR Intercept: \n", model.intercept_)
+
+from sklearn.metrics import r2_score,mean_squared_error
+
+def metrics(y_true,y_pred):
+  print(f"RMSE:", mean_squared_error(y_true,y_pred)**0.5)
+  print(f"R_Squared Error:", r2_score(y_true,y_pred))
+
+def accuracy(y_true,y_pred):
+  errors=abs(y_true - y_pred)
+  mape=100*np.mean(errors/y_true)
+  accuracy=100-mape
+  return accuracy
+
+#Testing the accuracy and value of the errors
+y_pred=model.predict(x_test)
+metrics(y_test,y_pred)
+accuracy(y_test,y_pred)
